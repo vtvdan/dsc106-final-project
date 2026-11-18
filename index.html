@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Explore how projected warming differs across latitude bands, cities, and emissions scenarios using CMIP6 climate models."
+    />
+    <title>What the Global Average Hides</title>
+    <link rel="stylesheet" href="style.css?v=9" />
+    <script defer src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+    <script defer src="main.js?v=8"></script>
+  </head>
+  <body>
+    <main>
+      <nav class="page-nav" aria-label="Page navigation">
+        <a href="#" class="project-name">What the Global Average Hides</a>
+        <div>
+          <a href="#global-story">The global view</a
+          ><a href="#explorer">Explore the map</a>
+        </div>
+      </nav>
+      <header class="intro">
+        <p class="eyebrow">CMIP6 climate projections · 2015-2100</p>
+        <h1>What the Global<br />Average Hides</h1>
+        <p class="lede">
+          The planet warms. The experience depends on where you look.
+        </p>
+        <p>
+          A global average compresses the planet into one number. Explore the
+          latitude bands behind that number, then compare how they change under
+          different emissions scenarios.
+        </p>
+        <a class="explore-link" href="#global-story"
+          >Follow the story <span aria-hidden="true">↓</span></a
+        >
+      </header>
+
+      <section
+        id="global-story"
+        class="global-story"
+        aria-labelledby="global-heading"
+      >
+        <div class="story-copy">
+          <p class="eyebrow">The global view</p>
+          <h2 id="global-heading">One number.<br />Three possible paths.</h2>
+          <p>
+            Each line describes the whole planet. Under all three emissions
+            scenarios, the global average rises above the 1995-2014 baseline.
+          </p>
+          <p>
+            By the end of the century, those paths diverge. But an average still
+            leaves a question unanswered.
+          </p>
+          <p class="story-question">Where does that warming happen?</p>
+          <a href="#explorer" class="explore-link"
+            >Look beyond the average <span aria-hidden="true">↓</span></a
+          >
+        </div>
+        <figure class="global-figure">
+          <svg
+            id="global-trend"
+            viewBox="0 0 690 390"
+            role="img"
+            aria-label="Global average warming under three emissions scenarios from 2015 to 2100"
+          ></svg>
+          <figcaption>
+            Three-model mean · Area-weighted global warming<br />Relative to
+            1995-2014 · Centered five-year averages<br />Endpoint values average
+            2098-2100
+          </figcaption>
+        </figure>
+      </section>
+
+      <section id="explorer" aria-labelledby="map-heading">
+        <p class="eyebrow section-kicker">The geographic view</p>
+        <div class="section-heading">
+          <div>
+            <h2 id="map-heading">The same planet. Uneven warming.</h2>
+            <p>Choose a city, or click a latitude band on either map.</p>
+          </div>
+          <label class="city-control"
+            >Find a city<select id="city" disabled></select
+          ></label>
+        </div>
+        <p class="data-note">
+          Each colored strip is a 5° latitude-band average across all
+          longitudes. City markers locate familiar places within these bands.
+          Values show warming relative to 1995-2014.
+        </p>
+        <div class="time-controls">
+          <button id="play" type="button" disabled>Play</button>
+          <label for="year-slider"
+            >Year <output id="year-label" for="year-slider">2090</output></label
+          >
+          <input
+            id="year-slider"
+            type="range"
+            min="2015"
+            max="2100"
+            value="2090"
+            disabled
+          />
+          <span id="window-label">Loading projections…</span>
+        </div>
+        <p id="error" role="alert" hidden></p>
+        <div class="maps">
+          <article class="map-panel" aria-label="First scenario">
+            <label for="scenario-left">First future</label
+            ><select id="scenario-left" disabled></select>
+            <p class="global-stat">
+              <span id="global-left">-</span><span>global average</span>
+            </p>
+            <svg
+              id="map-left"
+              viewBox="0 0 560 300"
+              role="img"
+              aria-label="First scenario world map. Use the city or latitude selector to explore with a keyboard."
+            ></svg>
+          </article>
+          <article class="map-panel" aria-label="Second scenario">
+            <label for="scenario-right">Second future</label
+            ><select id="scenario-right" disabled></select>
+            <p class="global-stat">
+              <span id="global-right">-</span><span>global average</span>
+            </p>
+            <svg
+              id="map-right"
+              viewBox="0 0 560 300"
+              role="img"
+              aria-label="Second scenario world map. Use the city or latitude selector to explore with a keyboard."
+            ></svg>
+          </article>
+        </div>
+        <div class="color-key">
+          <span>Warming relative to 1995-2014 (°C)</span
+          ><svg
+            id="legend"
+            viewBox="0 0 420 40"
+            role="img"
+            aria-label="Shared warming color scale from minus 1 to plus 18 degrees Celsius"
+          ></svg>
+        </div>
+        <div class="map-insights" aria-label="Geographic comparisons">
+          <article>
+            <h3>The far north</h3>
+            <p id="north-insight">Loading projections…</p>
+            <button type="button" id="north-focus" disabled>
+              Explore 85-90°N <span aria-hidden="true">↗</span>
+            </button>
+          </article>
+          <article>
+            <h3>The Southern Ocean band</h3>
+            <p id="south-insight">Loading projections…</p>
+            <button type="button" id="south-focus" disabled>
+              Explore 55-60°S <span aria-hidden="true">↗</span>
+            </button>
+          </article>
+        </div>
+        <div class="selection-panel">
+          <div class="selection-location">
+            <p class="eyebrow">Selected location</p>
+            <h3 id="location-name">San Diego, USA</h3>
+            <label for="latitude"
+              >Latitude band<select id="latitude" disabled></select
+            ></label>
+          </div>
+          <div class="selected-value first">
+            <p id="selected-label-left"></p>
+            <strong id="selected-left">-</strong
+            ><span id="relative-left"></span>
+          </div>
+          <div class="selected-value second">
+            <p id="selected-label-right"></p>
+            <strong id="selected-right">-</strong
+            ><span id="relative-right"></span>
+          </div>
+        </div>
+        <p
+          id="selection-summary"
+          class="selection-summary"
+          aria-live="polite"
+          aria-atomic="true"
+        ></p>
+        <div class="prompts">
+          <span>Explore a contrast</span
+          ><button id="fastest" disabled>Most warming</button
+          ><button id="tropics" disabled>Near the equator</button
+          ><button id="slowest" disabled>Least warming</button>
+        </div>
+        <p class="small-note">
+          "Most" and "least" use the second future's 2081-2100 average to select
+          a band. City readouts use the entire latitude band containing the
+          city.
+        </p>
+      </section>
+
+      <section class="trend-section" aria-labelledby="trend-heading">
+        <p class="eyebrow section-kicker">Your latitude through time</p>
+        <h2 id="trend-heading">Follow this band through the century</h2>
+        <p>
+          Changing emissions scenarios changes the projected path. The lines
+          track your selected latitude band; the vertical marker follows the
+          year on the maps.
+        </p>
+        <div id="trend-key" class="line-key"></div>
+        <svg
+          id="trend"
+          viewBox="0 0 1100 350"
+          role="img"
+          aria-label="Projected warming over time for the selected latitude band"
+        ></svg>
+        <p class="small-note">
+          Lines and maps use centered five-year averages, shortened at the
+          beginning and end of the record. Drag the year slider to compare the
+          same time on both views.
+        </p>
+        <details id="gap-details">
+          <summary>
+            How far apart are the most- and least-warming bands?
+          </summary>
+          <p id="gap-explanation"></p>
+          <div class="line-key">
+            <span class="line-swatch fast">Most warming</span
+            ><span class="line-swatch slow">Least warming</span>
+          </div>
+          <svg
+            id="gap"
+            viewBox="0 0 1100 320"
+            role="img"
+            aria-label="Supplementary comparison of the most- and least-warming latitude bands over time"
+          ></svg>
+        </details>
+      </section>
+
+      <section class="takeaway" aria-labelledby="takeaway-heading">
+        <p class="eyebrow section-kicker">Two futures, many experiences</p>
+        <h2 id="takeaway-heading">
+          A global number.<br />A world of differences.
+        </h2>
+        <p>
+          Warming varies across latitudes, and its magnitude depends on the
+          emissions scenario. Compare a polar band with a tropical band, then
+          change scenarios to see how both their warming and their difference
+          evolve.
+        </p>
+      </section>
+
+      <section class="methods" aria-labelledby="methods-heading">
+        <h2 id="methods-heading">About the data</h2>
+        <p>
+          Near-surface air temperature projections from CESM2, CanESM5, and
+          MIROC6, averaged equally across the three models. The data covers
+          SSP1-2.6, SSP2-4.5, and SSP5-8.5 from 2015 to 2100. Each model's
+          annual temperature is compared with its own 1995-2014 mean, then
+          averaged across longitude and grouped into 5° latitude bands.
+          Temperature differences have the same numerical value in kelvin and
+          degrees Celsius.
+        </p>
+        <p>
+          The global averages are area-weighted using the cosine of each band's
+          center latitude. City markers are geographic reference points for band
+          averages. These projections describe broad spatial patterns, and the
+          three-model mean does not display the spread among individual models.
+          Warming is measured against the recent historical baseline shown here.
+        </p>
+        <p>
+          Sources
+          <a href="https://cloud.google.com/storage/docs/public-datasets/cmip6"
+            >CMIP6 public dataset</a
+          >
+          ·
+          <a href="https://github.com/topojson/world-atlas"
+            >Natural Earth outlines via World Atlas</a
+          >. Maps use the Equal Earth projection.
+        </p>
+      </section>
+
+      <section class="prototype-notes" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">Prototype notes</h2>
+        <h3>What we have done so far</h3>
+        <p>
+          We selected CMIP6 temperature projections and processed three models
+          under three emissions scenarios into annual warming for 36 latitude
+          bands. We checked the exported tables for missing values, duplicate
+          records, complete coverage, and agreement between the ensemble and
+          individual-model averages. We added a global overview chart and two
+          linked world maps with shared time controls and a common color scale.
+          Readers can select a city or latitude band and compare its projected
+          warming with the global average. A linked time-series chart shows the
+          selected band's trajectory, and a supplementary chart compares the
+          bands with the most and least late-century warming. The page includes
+          geographic context, explanatory text, and a description of the data's
+          resolution.
+        </p>
+        <h3>What will be the most challenging part to design and why</h3>
+        <p>
+          The hardest design challenge is making geographic exploration
+          meaningful when our current data represents latitude-band averages.
+          City markers need to help readers orient themselves while clearly
+          communicating the geographic scale of each value. A second challenge
+          is planning out map colors, scenario controls, and line charts so
+          readers can follow a comparison without losing their selected
+          location. Strong polar warming also creates a wide numerical range, so
+          we need a shared color scale that preserves differences across the
+          rest of the planet. We will refine annotations and test whether
+          readers can explain what the global average hides after exploring the
+          page. For the final version, we will decide whether gridded data and
+          model-spread information would improve the story.
+        </p>
+      </section>
+      <footer>
+        DSC 106 · Final project prototype<br />Ananya Bajaj · Daniel Vinh Vuong
+        · Karl Gorski
+      </footer>
+    </main>
+  </body>
+</html>
