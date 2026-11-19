@@ -226,8 +226,16 @@ function initialize(rows, land) {
     );
   }
 
+  const tooltip = d3
+    .select("body")
+    .append("div")
+    .attr("class", "map-tooltip")
+    .attr("role", "status")
+    .style("display", "none");
+
   function makeMap(id) {
     const svg = d3.select(`#${id}`);
+    let currentScenario = null;
     const projection = d3.geoEqualEarth().fitExtent(
       [
         [10, 12],
@@ -295,7 +303,25 @@ function initialize(rows, land) {
         const coordinates = projection.invert(d3.pointer(event, svg.node()));
         if (coordinates && Number.isFinite(coordinates[1]))
           selectLocation(bandFor(coordinates[1]));
-      });
+      })
+      .on("mousemove", (event) => {
+        const coordinates = projection.invert(d3.pointer(event, svg.node()));
+        if (!coordinates || !Number.isFinite(coordinates[1])) {
+          tooltip.style("display", "none");
+          return;
+        }
+        const latitude = bandFor(coordinates[1]);
+        const value = average(currentScenario, latitude, year);
+        const difference = value - globalAverage(currentScenario, year);
+        tooltip
+          .style("display", "block")
+          .style("left", `${event.clientX + 14}px`)
+          .style("top", `${event.clientY + 14}px`)
+          .html(
+            `<strong>${bandLabel(latitude)}</strong>${signed(value)} in ${year}<br><span>${Math.abs(difference).toFixed(1)} °C ${difference >= 0 ? "above" : "below"} global average</span>`,
+          );
+      })
+      .on("mouseleave", () => tooltip.style("display", "none"));
     const cities = svg
       .append("g")
       .selectAll("g")
@@ -337,6 +363,7 @@ function initialize(rows, land) {
       .attr("stroke", "#9eada5")
       .attr("pointer-events", "none");
     return (scenario) => {
+      currentScenario = scenario;
       bands.attr("fill", (latitude) =>
         color(average(scenario, latitude, year)),
       );
@@ -407,6 +434,12 @@ function initialize(rows, land) {
       .append("g")
       .attr("class", "chart-grid")
       .attr("transform", `translate(${margin.left},0)`);
+    const referencePath = svg
+      .append("path")
+      .attr("fill", "none")
+      .attr("stroke", "#8f8580")
+      .attr("stroke-width", 1.8)
+      .attr("stroke-dasharray", "2 3");
     const firstPath = svg
       .append("path")
       .attr("fill", "none")
@@ -440,7 +473,7 @@ function initialize(rows, land) {
       .line()
       .x((point) => x(point.year))
       .y((point) => y(point.value));
-    return (first, second) => {
+    return (first, second, reference = []) => {
       const width = Math.max(320, Math.min(1100, svg.node().clientWidth));
       svg.attr("viewBox", `0 0 ${width} ${height}`);
       x.range([margin.left, width - margin.right]);
@@ -454,14 +487,9 @@ function initialize(rows, land) {
           )
           .tickFormat(d3.format("d")),
       );
-      const minimum = Math.min(
-        0,
-        d3.min([...first, ...second], (point) => point.value),
-      );
-      const maximum = Math.max(
-        2,
-        d3.max([...first, ...second], (point) => point.value),
-      );
+      const allPoints = [...first, ...second, ...reference];
+      const minimum = Math.min(0, d3.min(allPoints, (point) => point.value));
+      const maximum = Math.max(2, d3.max(allPoints, (point) => point.value));
       y.domain([
         minimum < 0 ? Math.floor(minimum) : 0,
         Math.ceil(maximum * 1.12),
@@ -473,6 +501,9 @@ function initialize(rows, land) {
           .tickSize(-(width - margin.left - margin.right))
           .tickPadding(10),
       );
+      referencePath
+        .datum(reference)
+        .attr("d", reference.length ? line : null);
       firstPath.datum(first).attr("d", line);
       secondPath.datum(second).attr("d", line);
       marker.attr("x1", x(year)).attr("x2", x(year));
@@ -531,19 +562,24 @@ function initialize(rows, land) {
       `Follow ${selectedCity ? selectedCity.short + "'s latitude band" : "the " + bandLabel(selectedLatitude) + " band"} through the century`;
     d3.select("#trend-key")
       .selectAll("span")
-      .data(scenarios)
+      .data([...scenarios, "reference"])
       .join("span")
-      .attr(
-        "class",
-        (scenario, index) =>
-          `line-swatch ${index === 0 ? "first-line" : "second-line"}`,
+      .attr("class", (scenario, index) =>
+        index === 2
+          ? "line-swatch reference-line"
+          : `line-swatch ${index === 0 ? "first-line" : "second-line"}`,
       )
-      .text((scenario) => SCENARIOS[scenario]);
+      .text((scenario, index) =>
+        index === 2
+          ? `Global average · ${SCENARIOS[scenarios[1]].split(" · ")[0]}`
+          : SCENARIOS[scenario],
+      );
     drawLeftMap(scenarios[0]);
     drawRightMap(scenarios[1]);
     drawTrend(
       series(scenarios[0], selectedLatitude),
       series(scenarios[1], selectedLatitude),
+      globalSeries.find((entry) => entry.scenario === scenarios[1]).points,
     );
     const { fast, slow } = extrema[scenarios[1]];
     element("gap-explanation").textContent =
